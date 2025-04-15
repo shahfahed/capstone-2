@@ -1,0 +1,32 @@
+- name: execute deployment on k8s
+  hosts: kmaster
+  become: yes
+  tasks:
+  - name: Deploying Application deployment...
+    ansible.builtin.shell: |
+      if kubectl get deployment capstone-2 >/dev/null 2>&1; then
+        echo "Deleting existing deployment"
+        kubectl delete deployment capstone-2
+      fi
+      echo "Applying deployment manifest"
+      kubectl create deployment capstone-2 --image=shahfahed/capstone-2:{{ build }}
+  
+  - name: increase replicas 
+    ansible.builtin.shell: kubectl scale deploy capstone-2 --replicas=2
+
+  - name: delete previous np-svc.yaml
+    ansible.builtin.shell: rm -rf /home/ubuntu/np-svc.yaml
+
+  - name: Copy np-svc manifest to remote node
+    copy:
+      src: np-svc.yaml
+      dest: /home/ubuntu/
+
+  - name: Deploying Application pods...
+    ansible.builtin.shell: |
+      if kubectl get svc capstone-2-np >/dev/null 2>&1; then
+        echo "Deleting previous application svc"
+        kubectl delete svc capstone-2-np
+      fi
+      echo "Applying service definition"
+      kubectl apply -f np-svc.yaml

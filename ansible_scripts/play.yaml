@@ -1,0 +1,45 @@
+- name: jenkins configurations
+  hosts: localhost
+  become: yes
+  tasks:
+  - name: apt update
+    apt: 
+      update_cache: yes
+
+  - name: java installation
+    apt:
+      name: openjdk-17-jdk
+      state: present
+  
+  - name: jenkins installation
+    script: jenkins.sh
+
+  - name: docker installation
+    script: docker.sh
+  
+  - name: docker permissions to jenkins
+    ansible.builtin.shell: usermod -aG docker jenkins
+
+  - name: Restart Jenkins service
+    ansible.builtin.systemd:
+      name: jenkins
+      state: restarted
+
+- name: k8s configuration
+  hosts: k8s
+  become: yes
+  tasks:
+  - name: apt udpate
+    apt:
+      update_cache: yes
+
+  - name: java installation
+    apt:
+      name: openjdk-17-jdk
+      state: present
+
+  - name: docker installation
+    script: docker.sh
+  
+  - name: docker permissions to ubuntu
+    ansible.builtin.shell: usermod -aG docker ubuntu
